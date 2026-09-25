@@ -4,6 +4,26 @@ A visual, interactive demo of using **Jev to assess task complexity**, then appl
 
 Typing pauses for 300 ms before a classification is queued. The interface shows the decision, probability distribution, complexity signals, request history, latency, and classification spend. It recommends a target model; it does **not** invoke the GPT-6 models or generate their answers.
 
+## Demo
+
+![Typing a task in Live mode. Each pause sends the text to Jev, and the route moves from Luna to Sol to Astra as the task grows.](docs/media/live-typing.gif)
+
+Recorded against the live Jev API. The task is typed in one go, with short pauses at punctuation. Each pause of 300 ms or more sends the current text to Jev, so the task is classified eight times as it grows:
+
+| Text so far ends with…                            | Complexity | Route               |
+| ------------------------------------------------- | ---------: | ------------------- |
+| "What is a hash map?"                             |          4 | Luna, low effort    |
+| "…Implement one in TypeScript with open addressing," |      43 | Sol, high effort    |
+| "…and include unit tests."                        |         50 | Sol, high effort    |
+| "…Then make it safe for concurrent access…"       |         68 | Astra, x-high effort |
+| "…prove that lookups stay linearizable…"          |         88 | Astra, max effort   |
+
+While the next classification is pending, the previous route stays on screen, dimmed. [MP4 version](docs/media/live-typing.mp4) (sharper, 1440×900).
+
+| Final route for the full task                            | Session analytics after a few example tasks          |
+| -------------------------------------------------------- | ---------------------------------------------------- |
+| ![Routing view with Astra selected](docs/media/routing.png) | ![Analytics section](docs/media/analytics.png) |
+
 ## Run locally
 
 Use Node.js 22 or newer.
@@ -65,9 +85,9 @@ All five displayed efforts, including `max`, were verified in the GPT-6 Luna, So
 
 Live request costs use OpenRouter's returned `usage.cost` in USD. If it is missing for the known Jev 1.13 model, the server estimates cost from the returned token counts and the price snapshot below, labeling it `estimated`. For an unknown model with no returned cost, cost is `null` and its source is `unavailable`. Token counts include the complete Jev input, including the rubric.
 
-Latency measures the server's complete OpenRouter round trip, including reading the decision response. The 300 ms typing debounce is separate. Requests are serialized in the browser; when typing outruns a request, only the newest queued input is sent next. Completed older requests remain in the session ledger for accounting but do not replace the latest visible decision.
+Latency measures the server's complete OpenRouter round trip, including reading the decision response. The 300 ms typing debounce is separate. Requests are serialized in the browser; when typing outruns a request, only the newest queued input is sent next. Completed older requests remain in the session ledger for accounting but do not replace the latest visible decision. While a new classification is pending, the previous decision stays visible but dimmed.
 
-The displayed session spend covers recorded completed requests, not an account invoice. A network failure, timeout, tab close, or disconnect can occur after OpenRouter has accepted a billable request; its unreturned usage cannot be known here. History lives in browser memory and is reset on reload or when explicitly cleared.
+The displayed session spend covers recorded completed requests, not an account invoice. A network failure, timeout, tab close, or disconnect can occur after OpenRouter has accepted a billable request; its unreturned usage cannot be known here. History lives in browser memory and is reset on reload. **Clear** in the request log removes the visible mode's history; **Reset session** at the top of the page clears the task, the current route, and history for both modes. Neither runs while a request is pending, so a possibly billed call is always recorded first.
 
 Demo mode uses a deterministic local keyword heuristic. Its scores, confidence, and distributions are **synthetic**, latency is actual local computation time, token counts and billed cost are zero, and it makes **no OpenRouter request**. A live failure is displayed as an error and never silently replaced by simulated data.
 

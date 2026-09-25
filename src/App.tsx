@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   Activity,
@@ -13,12 +13,11 @@ import {
   Cpu,
   ExternalLink,
   Layers3,
+  Tag,
   Moon,
   Orbit,
-  Radio,
   RotateCcw,
   Settings2,
-  Sparkles,
   Sun,
   Trash2,
   X,
@@ -33,9 +32,9 @@ import type {
 } from "./types";
 
 const modelMeta = {
-  luna: { name: "Luna", subtitle: "Fast & efficient", Icon: Moon },
-  sol: { name: "Sol", subtitle: "Balanced & capable", Icon: Sun },
-  astra: { name: "Astra", subtitle: "Deep & demanding", Icon: Orbit },
+  luna: { name: "Luna", subtitle: "Low · Medium", Icon: Moon },
+  sol: { name: "Sol", subtitle: "High", Icon: Sun },
+  astra: { name: "Astra", subtitle: "X-high · Max", Icon: Orbit },
 };
 const levels: Difficulty[] = ["low", "medium", "high", "xhigh", "max"];
 const levelNames: Record<Difficulty, string> = {
@@ -47,18 +46,18 @@ const levelNames: Record<Difficulty, string> = {
 };
 const examples = [
   {
-    name: "Quick answer",
+    name: "Simple question",
     icon: Zap,
     prompt: "What is the capital of Portugal? Give me a one-sentence answer.",
   },
   {
-    name: "Build something",
+    name: "Coding task",
     icon: Code2,
     prompt:
       "Write a TypeScript function that groups a list of transactions by month, calculates the monthly total, and handles missing dates. Include a few test cases.",
   },
   {
-    name: "Deep reasoning",
+    name: "System design",
     icon: Orbit,
     prompt:
       "Design a globally distributed payment system that guarantees exactly-once settlement across unreliable networks. Analyze consistency versus availability, prove the safety invariants of your protocol, and develop a failure recovery strategy for simultaneous region outages with adversarial message ordering.",
@@ -122,7 +121,7 @@ function RoutingMap({
               d={`M190 150 H245 C290 150 270 ${58 + i * 92} 330 ${58 + i * 92} H380`}
             />
             {result?.model === model && (
-              <circle className={`wire-dot ${model}`} r="4">
+              <circle key={result.id} className={`wire-dot ${model}`} r="4">
                 <animateMotion
                   dur="1.3s"
                   repeatCount="2"
@@ -140,7 +139,7 @@ function RoutingMap({
           <JevMark />
           <strong>Jev</strong>
         </div>
-        <span className="core-caption">Decision engine</span>
+        <span className="core-caption">Classifier</span>
       </div>
       <div className="model-stack">
         {(Object.keys(modelMeta) as ModelKey[]).map((key) => {
@@ -258,13 +257,13 @@ function LatencyChart({ entries }: { entries: RequestEntry[] }) {
         ))}
       </svg>
       <div className="chart-axis-x" aria-hidden="true">
-        <span>{completed.length ? "Earlier" : "No requests yet"}</span>
-        <span>Latest request</span>
+        <span>{completed.length ? "Oldest" : ""}</span>
+        <span>{completed.length ? "Newest" : ""}</span>
       </div>
       {!values.length && (
         <div className="chart-empty">
           <Activity size={19} />
-          <span>Your first task starts the timeline</span>
+          <span>No requests yet</span>
         </div>
       )}
     </div>
@@ -329,21 +328,18 @@ function Analytics({
     >
       <div className="section-heading">
         <div>
-          <h2 id="analytics-title">Every decision, measured.</h2>
+          <h2 id="analytics-title">Session analytics</h2>
           <p>
             {demo
-              ? "Simulation session · local timings, no API charges"
-              : "Live session · actual Jev requests through OpenRouter"}
+              ? "Simulation · local timings, no API charges"
+              : "Live · Jev requests through OpenRouter"}
           </p>
         </div>
-        <span className="session-label">
-          <Radio size={14} /> This session
-        </span>
       </div>
       <div className="metrics-strip">
         <div className="metric">
           <span>
-            <Layers3 size={15} /> {demo ? "Simulated requests" : "Jev requests"}
+            <Layers3 size={15} /> Requests
           </span>
           <strong>
             {entries.length.toLocaleString()}
@@ -356,30 +352,29 @@ function Analytics({
         </div>
         <div className="metric">
           <span>
-            <Clock3 size={15} /> Average response
+            <Clock3 size={15} /> Mean latency
           </span>
           <strong>
             {time(mean)}
             <small>ms</small>
           </strong>
           <p>
-            {demo ? "Local simulation" : "Jev round trip"} · excludes debounce
+            {demo ? "Local simulation" : "Server round trip"} · excludes debounce
           </p>
         </div>
         <div className="metric">
           <span>
-            <Activity size={15} /> P95 response
+            <Activity size={15} /> P95 latency
           </span>
           <strong>
             {time(percentile(latencies, 0.95))}
             <small>ms</small>
           </strong>
-          <p>95th percentile · successful requests</p>
+          <p>Successful requests only</p>
         </div>
         <div className="metric cost-metric">
           <span>
-            <span className="dollar-icon">$</span>{" "}
-            {demo ? "API spend" : "Jev spend"}
+            <span className="dollar-icon">$</span> Classifier spend
           </span>
           <strong>
             {money(total)}
@@ -387,9 +382,9 @@ function Analytics({
           </strong>
           <p>
             {demo
-              ? "Simulation is free"
+              ? "No charges in simulation"
               : unknownCost
-                ? "Known subtotal · some costs unavailable"
+                ? "Partial total · some costs unavailable"
                 : estimated
                   ? "Includes estimated costs"
                   : "Reported by OpenRouter"}
@@ -408,7 +403,7 @@ function Analytics({
         </div>
         <div className="distribution-panel">
           <div className="panel-heading">
-            <h3>Where tasks go</h3>
+            <h3>Model distribution</h3>
             <span>{successful.length} routed</span>
           </div>
           <div
@@ -454,7 +449,7 @@ function Analytics({
       <div className="request-log">
         <div className="panel-heading">
           <h3>
-            Request stream <span className="count-badge">{entries.length}</span>
+            Requests <span className="count-badge">{entries.length}</span>
           </h3>
           <div className="log-actions">
             <button
@@ -509,10 +504,10 @@ function Analytics({
           <div className="log-empty">
             <Layers3 size={20} />
             <div>
-              <strong>A little transparency goes a long way.</strong>
+              <strong>No requests yet</strong>
               <span>
-                Type a task above to see its route, response time, and
-                classification cost.
+                Each classification is logged here with its route, latency,
+                and cost.
               </span>
             </div>
           </div>
@@ -560,7 +555,7 @@ function RequestRow({
             </span>
           ) : (
             <span className="muted">
-              {entry.status === "pending" ? "In flight" : "Failed"}
+              {entry.status === "pending" ? "Pending" : "Failed"}
             </span>
           )}
         </td>
@@ -584,7 +579,7 @@ function RequestRow({
             <p>{entry.prompt}</p>
             {entry.error ? (
               <p className="error-text">
-                {entry.error} Any upstream charge may be unavailable.
+                {entry.error} Cost for this request is unknown.
               </p>
             ) : (
               <pre>
@@ -617,31 +612,60 @@ export default function App() {
     error,
     entries,
     clearHistory,
+    resetSession,
     retry,
     reloadConfig,
   } = useClassifier();
   const [copied, setCopied] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  useEffect(() => {
+    if (!confirmReset) return;
+    const id = window.setTimeout(() => setConfirmReset(false), 4000);
+    return () => window.clearTimeout(id);
+  }, [confirmReset]);
   const setupDialog = useRef<HTMLDialogElement>(null);
   const editor = useRef<HTMLTextAreaElement>(null);
   const demo = mode === "demo";
   const busy = status === "classifying";
+  const anyPending = entries.some((e) => e.status === "pending");
+  const sessionEmpty = !entries.length && !prompt;
+  const onReset = () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    if (resetSession()) {
+      setConfirmReset(false);
+      editor.current?.focus();
+    }
+  };
   const visibleEntries = entries.filter((e) => e.mode === mode);
-  const currentModel = result
-    ? config?.models.find((m) => m.key === result.model)
+  // Keep the last route on screen, dimmed, while the next one is pending, so
+  // the readouts change in place as the task grows instead of blanking out.
+  const [held, setHeld] = useState<Classification | null>(null);
+  useEffect(() => {
+    if (result) setHeld(result);
+  }, [result]);
+  useEffect(() => {
+    if (!prompt.trim() || !live || status === "error") setHeld(null);
+  }, [prompt, live, status]);
+  useEffect(() => setHeld(null), [mode]);
+  const shown = result ?? held;
+  const stale = !result && !!held;
+  const currentModel = shown
+    ? config?.models.find((m) => m.key === shown.model)
     : undefined;
   const statusText = !live
-    ? "Auto-classify paused"
+    ? "Auto-classify is off"
     : status === "debouncing"
-      ? "Waiting for your next thought…"
+      ? "Waiting for typing to stop…"
       : busy
-        ? demo
-          ? "Simulating a decision…"
-          : "Jev is classifying…"
+        ? "Classifying…"
         : status === "error"
           ? "Classification failed"
           : result
-            ? `Routed in ${time(result.latencyMs)} ms`
-            : "Ready when you are";
+            ? `Classified in ${time(result.latencyMs)} ms`
+            : "Idle";
   const copyRoute = async () => {
     if (!result) return;
     try {
@@ -686,8 +710,7 @@ export default function App() {
             onClick={() => setupDialog.current?.showModal()}
           >
             <span />
-            {config?.configured ? "OpenRouter connected" : "Connect OpenRouter"}
-            <ExternalLink size={13} />
+            {config?.configured ? "API key configured" : "No API key"}
           </button>
           <button
             className="icon-button setup-button"
@@ -701,38 +724,48 @@ export default function App() {
       <main>
         <section className="intro" id="playground">
           <div>
-            <div className="intro-kicker">
-              <span className="tiny-orbit">
-                <Orbit size={14} />
-              </span>
-              Intelligence starts with the right route
-            </div>
-            <h1>Every task has a perfect match.</h1>
+            <h1>Task routing</h1>
             <p>
-              Start typing. Watch Jev find the complexity, then choose the
-              model.
+              Jev scores how hard a task is. A fixed policy maps that score to a
+              GPT-6 model and reasoning effort. Nothing is sent to GPT-6.
             </p>
           </div>
-          <div className="mode-control" aria-label="Classification mode">
+          <div className="intro-actions">
             <button
-              aria-pressed={demo}
-              className={demo ? "active" : ""}
-              onClick={() => setMode("demo")}
-            >
-              Simulation
-            </button>
-            <button
-              aria-pressed={!demo}
-              className={!demo ? "active" : ""}
-              onClick={() =>
-                config?.configured
-                  ? setMode("live")
-                  : setupDialog.current?.showModal()
+              className={`reset-button ${confirmReset ? "confirming" : ""}`}
+              onClick={onReset}
+              onBlur={() => setConfirmReset(false)}
+              disabled={sessionEmpty || anyPending}
+              title={
+                anyPending
+                  ? "Wait for the pending request to finish"
+                  : "Clear the task, result, and request history for both modes"
               }
             >
-              <span className="live-dot" />
-              Live API
+              <RotateCcw size={14} />
+              {confirmReset ? "Click again to reset" : "Reset session"}
             </button>
+            <div className="mode-control" aria-label="Classification mode">
+              <button
+                aria-pressed={demo}
+                className={demo ? "active" : ""}
+                onClick={() => setMode("demo")}
+              >
+                Simulation
+              </button>
+              <button
+                aria-pressed={!demo}
+                className={!demo ? "active" : ""}
+                onClick={() =>
+                  config?.configured
+                    ? setMode("live")
+                    : setupDialog.current?.showModal()
+                }
+              >
+                <span className="live-dot" />
+                Live API
+              </button>
+            </div>
           </div>
         </section>
         {(configError || (demo && config)) && (
@@ -740,14 +773,14 @@ export default function App() {
             <CircleHelp size={15} />
             <span>
               {configError ??
-                "Simulation mode uses local sample logic. Connect your key to see real Jev decisions, probabilities, and costs."}
+                "Simulation uses local heuristics instead of Jev, so the scores and probabilities are approximate. Add an OpenRouter key to use the real classifier."}
             </span>
             <button
               onClick={() =>
                 configError ? reloadConfig() : setupDialog.current?.showModal()
               }
             >
-              {configError ? "Reconnect" : "API setup"}
+              {configError ? "Retry" : "Setup"}
               <ArrowRight size={14} />
             </button>
           </div>
@@ -755,9 +788,7 @@ export default function App() {
         <section className="workspace" aria-label="Task routing playground">
           <div className="editor-panel">
             <div className="editor-heading">
-              <label htmlFor="task-input">
-                <span className="step-number">1</span>Your task
-              </label>
+              <label htmlFor="task-input">Task</label>
               <label className="auto-label">
                 <span>Auto-classify</span>
                 <input
@@ -777,7 +808,7 @@ export default function App() {
                 maxLength={12000}
                 spellCheck={false}
                 placeholder={
-                  "What would you like to do?\n\nAsk a quick question, sketch a coding task, or throw in a problem that needs some serious thought."
+                  "Type or paste a task. Classification runs when you stop typing."
                 }
                 aria-describedby="input-help"
               />
@@ -801,7 +832,7 @@ export default function App() {
               </div>
             </div>
             <div className="examples">
-              <span>Take it for a spin</span>
+              <span>Examples</span>
               <div>
                 {examples.map((example) => (
                   <button
@@ -837,22 +868,19 @@ export default function App() {
               </div>
             )}
           </div>
-          <div className="route-panel">
+          <div className={`route-panel ${stale ? "is-stale" : ""}`}>
             <div className="route-heading">
-              <h2>
-                <span className="step-number">2</span>The right amount of
-                intelligence
-              </h2>
+              <h2>Route</h2>
               <span className="family-badge">OpenAI GPT-6</span>
             </div>
-            <RoutingMap result={result} busy={busy} />
+            <RoutingMap result={shown} busy={busy} />
             <div className="route-summary">
               <div className="effort-heading">
                 <span>Reasoning effort</span>
-                {result && (
+                {shown && (
                   <span className="confidence">
-                    {demo ? "Simulated confidence" : "Jev confidence"}{" "}
-                    <strong>{Math.round(result.confidence * 100)}%</strong>
+                    Confidence{" "}
+                    <strong>{Math.round(shown.confidence * 100)}%</strong>
                   </span>
                 )}
               </div>
@@ -861,8 +889,8 @@ export default function App() {
                   <div
                     key={level}
                     className={
-                      result?.difficulty === level
-                        ? `effort-selected ${result.model}`
+                      shown?.difficulty === level
+                        ? `effort-selected ${shown.model}`
                         : ""
                     }
                   >
@@ -873,16 +901,16 @@ export default function App() {
               </div>
               <div className="route-outcome">
                 <span>
-                  {result ? (
+                  {shown ? (
                     <>
-                      <strong>{modelMeta[result.model].name}</strong> with{" "}
+                      <strong>{modelMeta[shown.model].name}</strong> with{" "}
                       <strong>
-                        {levelNames[result.difficulty].toLowerCase()}
+                        {levelNames[shown.difficulty].toLowerCase()}
                       </strong>{" "}
                       reasoning
                     </>
                   ) : (
-                    "Your route will appear as you type"
+                    "No task classified yet"
                   )}
                 </span>
                 <button
@@ -897,13 +925,16 @@ export default function App() {
             </div>
           </div>
         </section>
-        <section className="decision-details" aria-label="Decision details">
+        <section
+          className={`decision-details ${stale ? "is-stale" : ""}`}
+          aria-label="Decision details"
+        >
           <div className="complexity-readout">
             <div>
               <Cpu size={17} />
               <span>Task complexity</span>
               <strong>
-                {result ? Math.round(result.complexity) : "—"}
+                {shown ? Math.round(shown.complexity) : "—"}
                 <small>/ 100</small>
               </strong>
             </div>
@@ -912,7 +943,7 @@ export default function App() {
                 <span
                   key={i}
                   className={
-                    result && i < (result.complexity / 100) * 30 ? "filled" : ""
+                    shown && i < (shown.complexity / 100) * 30 ? "filled" : ""
                   }
                   style={{ "--segment": i } as CSSProperties}
                 />
@@ -929,7 +960,7 @@ export default function App() {
             <div className="probability-bars">
               {levels.map((level) => {
                 const probability =
-                  result?.probabilities.find((p) => p.level === level)
+                  shown?.probabilities.find((p) => p.level === level)
                     ?.probability ?? 0;
                 return (
                   <div
@@ -941,7 +972,7 @@ export default function App() {
                       <i style={{ width: `${probability * 100}%` }} />
                     </div>
                     <strong>
-                      {result ? `${Math.round(probability * 100)}%` : "—"}
+                      {shown ? `${Math.round(probability * 100)}%` : "—"}
                     </strong>
                   </div>
                 );
@@ -950,8 +981,8 @@ export default function App() {
           </div>
           <div className="price-readout">
             <span>
-              <Sparkles size={16} />
-              Selected model pricing
+              <Tag size={16} />
+              Model pricing
             </span>
             <strong>
               {currentModel?.inputPerMillion != null
@@ -962,10 +993,10 @@ export default function App() {
             <p>
               {currentModel?.outputPerMillion != null
                 ? `$${currentModel.outputPerMillion.toFixed(2)} / 1M output tokens`
-                : "Select a task to see model rates"}
+                : "Shown after a task is classified"}
             </p>
             <span className="small-note">
-              Reference rates · routing only, no model call
+              OpenRouter list prices, for reference
             </span>
           </div>
         </section>
@@ -977,7 +1008,7 @@ export default function App() {
         <footer className="footer">
           <span>
             <JevMark small />
-            Little decisions. Big difference.
+            Jev routing lab
           </span>
           <span>
             Powered by{" "}
@@ -993,7 +1024,7 @@ export default function App() {
               OpenRouter
             </a>
             <span className="footer-separator" />
-            Session data stays in this tab
+            History is kept in this tab only
           </span>
         </footer>
       </main>
@@ -1014,10 +1045,10 @@ export default function App() {
             <X size={21} />
           </button>
         </div>
-        <h2 id="setup-title">Make it a live experiment.</h2>
+        <h2 id="setup-title">Live API setup</h2>
         <p>
-          Jev classifies your task through OpenRouter. The key stays on your
-          server.
+          Live mode sends each task to Jev through OpenRouter. The key is read
+          by the local server and never sent to the browser.
         </p>
         <ol className="setup-steps">
           <li>
@@ -1051,8 +1082,9 @@ export default function App() {
             <div>
               <strong>Switch to Live API</strong>
               <p>
-                Pause typing for 300ms to send a classification. Only Jev is
-                called; Luna, Sol, and Astra are routing recommendations.
+                A task is sent {config?.debounceMs ?? 300} ms after you stop
+                typing. Only Jev is called; Luna, Sol, and Astra are
+                recommendations, not requests.
               </p>
             </div>
           </li>

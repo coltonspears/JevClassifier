@@ -357,3 +357,28 @@ test("choosing demo explicitly survives connection refreshes", async (t) => {
   assert.equal(h.requests.length, 1);
   assert.equal(h.read("result"), "Stay simulated");
 });
+
+test("reset clears the task, result, and both modes' history, but never a pending call", async (t) => {
+  const h = await mountClassifier(t);
+  await h.change((api) => api.setPrompt("Live task"));
+  await h.tick(300);
+  await h.change((api) => {
+    assert.equal(api.resetSession(), false, "refused while a request is in flight");
+  });
+  assert.equal(h.entries().length, 1);
+  await h.complete(0);
+  await h.change((api) => api.setMode("demo"));
+  await h.tick(300);
+  await h.complete(1);
+  assert.equal(h.entries().length, 2);
+  assert.equal(h.read("result"), "Live task");
+  await h.change((api) => {
+    assert.equal(api.resetSession(), true);
+  });
+  assert.equal(h.entries().length, 0);
+  assert.equal(h.read("result"), "");
+  assert.equal(h.read("status"), "idle");
+  assert.equal(h.read("mode"), "demo", "mode choice survives a reset");
+  await h.tick(1000);
+  assert.equal(h.requests.length, 2, "reset does not trigger a request");
+});

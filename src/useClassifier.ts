@@ -15,7 +15,7 @@ function errorMessage(value: unknown): string {
     if ("message" in value && typeof value.message === "string")
       return value.message;
   }
-  return "The request could not be completed. Please try again.";
+  return "The request failed. Try again.";
 }
 
 // A completed response is a snapshot: request history must not change when the
@@ -123,7 +123,7 @@ export function useClassifier() {
       if (!response.ok) throw new Error(errorMessage(payload));
       if (!isClassification(payload))
         throw new Error(
-          "The server returned an incomplete classification. Please try again.",
+          "The server returned an incomplete classification.",
         );
 
       const snapshot = freezeSnapshot(payload);
@@ -202,7 +202,7 @@ export function useClassifier() {
     if (latest.mode === "live" && !configRef.current.configured) {
       setStatus("error");
       setError(
-        "Add an OpenRouter API key to .env and reload the connection to use live Jev.",
+        "Live mode needs OPENROUTER_API_KEY in .env. Add it, restart the server, then check the connection.",
       );
       return;
     }
@@ -283,6 +283,25 @@ export function useClassifier() {
       previous.filter((entry) => entry.mode !== currentMode),
     );
   }, []);
+
+  const resetSession = useCallback(() => {
+    // Same rule as clearHistory: a dispatched call may already be billed, so
+    // its entry has to land before the session can be wiped.
+    if (inFlight.current) return false;
+    cancelTimer();
+    queued.current = null;
+    input.current = {
+      ...input.current,
+      prompt: "",
+      revision: input.current.revision + 1,
+    };
+    setPromptState("");
+    setEntries([]);
+    setResult(null);
+    setError(null);
+    setStatus("idle");
+    return true;
+  }, [cancelTimer]);
 
   const reloadConfig = useCallback(async () => {
     configController.current?.abort();
@@ -370,6 +389,7 @@ export function useClassifier() {
     error,
     entries,
     clearHistory,
+    resetSession,
     retry,
     reloadConfig,
   };
