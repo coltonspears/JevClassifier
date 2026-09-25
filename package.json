@@ -1,0 +1,33 @@
+{
+  "name": "jev-routing-lab",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"node --watch server/index.mjs\" \"vite --host 127.0.0.1\"",
+    "build": "tsc -b && vite build",
+    "start": "node server/index.mjs",
+    "test": "node --import tsx --test server/*.test.mjs src/*.test.tsx",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@fontsource-variable/manrope": "^5.2.8",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "concurrently": "^9.1.2",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.23.15",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5"
+  }
+}
