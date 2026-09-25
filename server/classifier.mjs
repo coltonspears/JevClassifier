@@ -263,7 +263,7 @@ export async function classifyLive(
     throw new ApiError(
       503,
       "NOT_CONFIGURED",
-      "Add OPENROUTER_API_KEY to .env and restart the server to use live Jev.",
+      "Live mode is not configured on this server. Set OPENROUTER_API_KEY (in .env locally, or as an environment variable on your host) to enable it.",
     );
   const started = performance.now();
   const controller = new AbortController();

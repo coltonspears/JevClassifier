@@ -48,6 +48,15 @@ Restart `npm run dev` after changing `.env`, then select **Live API**. The key s
 
 The server binds to localhost by default. This sample has no user authentication or shared billing controls; add those before exposing the live endpoint publicly.
 
+### Deploy to Vercel
+
+The repo includes `vercel.json` and `api/index.mjs`. Vercel serves the built frontend from `dist/` and runs the Express API as a serverless function, so `HOST` and `PORT` are not used. Import the repo in Vercel, then set these under **Settings → Environment Variables**:
+
+- `OPENROUTER_API_KEY`: leave it unset for a Simulation-only deployment.
+- `JEV_MODEL` (optional): defaults to `typesafe/jev-1.13`.
+
+A public deployment with a key lets anyone who finds the URL spend that key's credits. Use a dedicated key with a low credit limit.
+
 ```sh
 npm test
 npm run build
